@@ -196,7 +196,7 @@
 /* === CONFIG === */
 const FREE_MODE = true; // all docs unlocked (no PayPal while testing)
 
-// ✅ Your updated Apps Script Web App URL:
+// ✅ Your Apps Script Web App URL:
 const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxmOe__t7TqR1_-DifHkd4qjrbxAg4emoPnXOWO8SkAkmYYhlmHQW6Mp8aJfnIlNv1s/exec";
 
 /* New York counties — borough counties first, then the rest */
@@ -265,10 +265,11 @@ function downloadBase64File(b64, fileName, mime){
 }
 
 /* Call Apps Script to build a DOCX/PDF from a Drive template */
+/* IMPORTANT CHANGE: text/plain to avoid CORS preflight */
 async function buildDocFromServer(docKey, payload, paidTier){
   const res = await fetch(APPS_SCRIPT_WEBAPP_URL, {
     method: "POST",
-    headers: { "Content-Type":"application/json" },
+    headers: { "Content-Type":"text/plain;charset=utf-8" },
     body: JSON.stringify({
       action: "buildDoc",
       docKey,
@@ -332,7 +333,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }catch(err){
       console.error(err);
       statusEl.classList.add('error-text');
-      statusEl.textContent = "Server says: " + err.message;
+      statusEl.textContent = (err.message === "Failed to fetch"
+        ? "Could not reach the server. Make sure your Apps Script Web App is deployed as 'Anyone' and try again."
+        : "Server says: " + err.message
+      );
     }
   });
 
@@ -362,7 +366,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }catch(err){
         console.error(err);
         statusEl.classList.add('error-text');
-        statusEl.textContent = "Server says: " + err.message;
+        statusEl.textContent = (err.message === "Failed to fetch"
+          ? "Could not reach the server. Make sure your Apps Script Web App is deployed as 'Anyone' and try again."
+          : "Server says: " + err.message
+        );
       }
     });
   });
