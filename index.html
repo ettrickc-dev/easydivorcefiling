@@ -51,7 +51,7 @@
   <form id="qform" class="card">
     <h3>Your Info</h3>
 
-    <label>Email (for receipts & document delivery) *</label>
+    <label>Email (for receipts &amp; document delivery) *</label>
     <input id="email" type="email" required placeholder="you@example.com"/>
 
     <div class="row row-2">
@@ -109,6 +109,7 @@
       <div>
         <label>Filing County *</label>
         <select id="county" required></select>
+        <span class="note" style="font-size:.8rem;">(Scroll to see all New York counties.)</span>
       </div>
       <div>
         <label>Basis of Venue *</label>
@@ -137,11 +138,11 @@
 
     <div class="row row-2">
       <div>
-        <label id="m_city_label">Marriage City *</label>
-        <input id="m_city" required/>
+        <label id="m_city_label">Marriage City / Town *</label>
+        <input id="m_city" required placeholder="City or Town"/>
       </div>
       <div>
-        <label id="m_state_label">Marriage State *</label>
+        <label id="m_state_label">Marriage State / Country *</label>
         <input id="m_state_or_country" required placeholder="NY (or country if outside USA)"/>
       </div>
     </div>
@@ -198,8 +199,19 @@ const FREE_MODE = true; // all docs unlocked (no PayPal while testing)
 // Your already-deployed Apps Script Web App URL:
 const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYcXRcA2G5QmacxUA1AsihyNxB386ZLIQlL7xC8BIN0728hNQ1WRtB3ihFhqwIWJSA/exec";
 
+/* New York counties — borough counties first, then the rest */
 const BOROUGH_FIRST = ["Bronx","Kings","New York","Queens","Richmond"];
-const OTHER_COUNTIES = ["Albany","Allegany","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Rensselaer","Rockland","St. Lawrence","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"];
+const OTHER_COUNTIES = [
+  "Albany","Allegany","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung",
+  "Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie",
+  "Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer",
+  "Jefferson","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau",
+  "Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego",
+  "Otsego","Putnam","Rensselaer","Rockland","St. Lawrence","Saratoga",
+  "Schenectady","Schoharie","Schuyler","Seneca","Steuben","Suffolk",
+  "Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne",
+  "Westchester","Wyoming","Yates"
+];
 const NY_COUNTIES = [...BOROUGH_FIRST, ...OTHER_COUNTIES];
 
 const $ = s => document.querySelector(s);
@@ -252,7 +264,7 @@ function downloadBase64File(b64, fileName, mime){
   URL.revokeObjectURL(url);
 }
 
-/* Call Apps Script to build a DOCX from a Drive template */
+/* Call Apps Script to build a DOCX/PDF from a Drive template */
 async function buildDocFromServer(docKey, payload, paidTier){
   const res = await fetch(APPS_SCRIPT_WEBAPP_URL, {
     method: "POST",
@@ -271,18 +283,19 @@ async function buildDocFromServer(docKey, payload, paidTier){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1) Set counties
+  // 1) Set counties (boroughs first, then the rest)
   setChoices($('#county'), NY_COUNTIES);
 
-  // 2) Dynamic marriage labels
+  // 2) Dynamic marriage labels + placeholders
   function updateMarriageLabels(){
     const isUSA = $('#m_country_sel').value === 'USA';
-    $('#m_city_label').textContent = isUSA ? 'Marriage City *' : 'Marriage Town *';
-    $('#m_state_label').textContent = isUSA ? 'Marriage State *' : 'Marriage Country *';
+    $('#m_city_label').textContent  = isUSA ? 'Marriage City *'   : 'Marriage Town *';
+    $('#m_state_label').textContent = isUSA ? 'Marriage State *'  : 'Marriage Country *';
+    $('#m_city').placeholder        = isUSA ? 'City (e.g., Brooklyn)' : 'Town (e.g., Montego Bay)';
     $('#m_state_or_country').placeholder = isUSA ? 'NY' : 'Country (e.g., Jamaica)';
   }
   $('#m_country_sel').addEventListener('change', updateMarriageLabels);
-  updateMarriageLabels();
+  updateMarriageLabels(); // set initial state
 
   let lastComplaintDoc = null; // {b64,fileName,mime}
 
@@ -327,4 +340,22 @@ document.addEventListener('DOMContentLoaded', () => {
       statusEl.textContent = "Preparing " + key + "…";
 
       try{
-        const payload = collectPayload(); // sa
+        const payload = collectPayload(); // same answers
+        const result = await buildDocFromServer(key, payload, "FREE_TEST");
+        const fileName = result.fileName || ("NY_" + key + (key==="RJI"||key==="CERTDISS" ? ".pdf" : ".docx"));
+        const mime = result.mimeType || (key==="RJI"||key==="CERTDISS"
+          ? "application/pdf"
+          : "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        downloadBase64File(result.docB64, fileName, mime);
+        statusEl.textContent = "Download started.";
+      }catch(err){
+        console.error(err);
+        statusEl.classList.add('error-text');
+        statusEl.textContent = "Problem building " + key + ". Check Apps Script / Drive template IDs.";
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>
