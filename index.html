@@ -10,24 +10,24 @@
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:#fff;color:#111}
   .wrap{max-width:980px;margin:22px auto;padding:0 16px}
   h1{margin:8px 0 10px}
+  h3{margin:8px 0}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
   .chip{border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:.92rem;background:#fff}
   .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px 16px 18px;margin:14px 0;box-shadow:0 6px 16px rgba(0,0,0,.04)}
   label{display:block;margin:10px 0 6px;font-weight:600}
-  input,select,textarea{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb}
+  input,select,textarea{width:100%;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;box-sizing:border-box}
   .row{display:grid;gap:12px}
   @media(min-width:760px){.row-2{grid-template-columns:1fr 1fr}}
   .btn{display:inline-flex;gap:.5rem;align-items:center;justify-content:center;padding:12px 18px;border-radius:10px;border:0;background:#0d6efd;color:#fff;font-weight:700;cursor:pointer}
   .btn.alt{background:#16a34a}
+  .btn.small{font-size:.9rem;padding:8px 12px}
   .note{font-size:.95rem;color:#374151}
   .hidden{display:none}
   .ok{color:#16a34a;font-weight:700}
-  .grid2{display:grid;gap:10px}
-  @media(min-width:880px){.grid2{grid-template-columns:1fr 1fr}}
   .guarantee{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:8px}
-  .faq dt{font-weight:700;margin-top:10px}
-  .faq dd{margin:4px 0 10px}
   .dev{background:#fff7ed;border:1px dashed #fdba74;border-radius:10px;padding:10px}
+  .dev h4{margin:0 0 4px}
+  .error-text{color:#b91c1c;font-weight:600}
 </style>
 </head>
 <body>
@@ -41,8 +41,14 @@
   </div>
 
   <div class="card">
-    <p class="note">Fill this out. You’ll get your <strong>Summons &amp; Complaint</strong> instantly for free. Then choose either (a) <strong>$199</strong> for the full DIY pack (all remaining forms + instructions), or (b) <strong>$999</strong> attorney-handled service (we file for you &amp; cover filing fees).</p>
-    <div class="guarantee"><strong>We’ve got your back:</strong> If any $199 package document is rejected for a formatting issue, we’ll fix it free.</div>
+    <p class="note">
+      Fill this out. You’ll get your <strong>Summons &amp; Complaint</strong> instantly for free. 
+      Then choose either (a) <strong>$199</strong> for the full DIY pack (all remaining forms + instructions),
+      or (b) <strong>$999</strong> attorney-handled service (we file for you &amp; cover filing fees).
+    </p>
+    <div class="guarantee">
+      <strong>We’ve got your back:</strong> If any $199 package document is rejected for a formatting issue, we’ll fix it free.
+    </div>
   </div>
 
   <form id="qform" class="card">
@@ -158,13 +164,17 @@
 
   <div id="freeBlock" class="card hidden">
     <h3 class="ok">Your Summons &amp; Complaint is ready ✅</h3>
-    <p class="note">This document is based on your answers and ready to file for a New York uncontested divorce with no children.</p>
+    <p class="note">
+      This document is based on your answers and ready to file for a New York uncontested divorce with no children.
+    </p>
     <button class="btn alt" id="downloadSAndC">Download Summons &amp; Complaint (.docx)</button>
   </div>
 
   <div id="fullPackage" class="card hidden">
     <h3>Full Package (Test Mode: Free)</h3>
-    <p class="note">All downloads are enabled for testing. In production, these unlock after payment.</p>
+    <p class="note">
+      All downloads are enabled for testing. In production, these unlock after payment.
+    </p>
     <div style="display:grid;gap:10px">
       <button class="btn" data-doc="AFF_P">Affirmation of Plaintiff</button>
       <button class="btn" data-doc="AFF_D">Affirmation of Defendant</button>
@@ -177,27 +187,41 @@
       <button class="btn" data-doc="CERTDISS">Certificate of Dissolution (PDF)</button>
       <button class="btn" data-doc="INSTR">Step-by-Step Instructions</button>
     </div>
+  </div>
 
-    <!-- Optional dev helper: drop in any DOCX/PDF to replace a template on the fly -->
-    <div class="dev" style="margin-top:10px">
-      <strong>Developer test helper:</strong> Upload a DOCX/PDF to set/override a template now (no rebuild).
-      <div class="row row-2" style="margin-top:8px">
+  <!-- Developer setup box so you never see “Error. Please try again.” again -->
+  <div class="card dev">
+    <h4>Developer Setup (1-time per browser)</h4>
+    <p class="note">
+      Before testing, load your templates here. At minimum, pick <strong>COMPLAINT.docx</strong>.
+    </p>
+    <div class="row row-2">
+      <div>
+        <label>Choose Template Key</label>
         <select id="dev_key">
-          <option value="COMPLAINT">COMPLAINT</option>
-          <option value="AFF_P">AFF_P</option>
-          <option value="AFF_D">AFF_D</option>
-          <option value="REG">REG</option>
-          <option value="FIND">FIND</option>
-          <option value="JUDG">JUDG</option>
-          <option value="NOI">NOI</option>
-          <option value="CERT">CERT</option>
-          <option value="INSTR">INSTR</option>
-          <option value="RJI">RJI (PDF)</option>
-          <option value="CERTDISS">CERTDISS (PDF)</option>
+          <option value="COMPLAINT">COMPLAINT (Summons &amp; Complaint)</option>
+          <option value="AFF_P">AFF_P — Affirmation of Plaintiff</option>
+          <option value="AFF_D">AFF_D — Affirmation of Defendant</option>
+          <option value="REG">REG — Affirmation of Regularity</option>
+          <option value="FIND">FIND — Findings</option>
+          <option value="JUDG">JUDG — Judgment of Divorce</option>
+          <option value="NOI">NOI — Note of Issue</option>
+          <option value="CERT">CERT — Certification</option>
+          <option value="INSTR">INSTR — Instructions</option>
+          <option value="RJI">RJI — RJI (PDF)</option>
+          <option value="CERTDISS">CERTDISS — Certificate of Dissolution (PDF)</option>
         </select>
+      </div>
+      <div>
+        <label>Upload DOCX/PDF for Selected Key</label>
         <input id="dev_file" type="file" accept=".docx,.pdf"/>
       </div>
     </div>
+    <p id="dev_status" class="note"></p>
+    <p class="note">
+      <strong>Tip for max conversions:</strong> Once you confirm everything works, we’ll turn PayPal back on, keep 
+      the free Summons &amp; Complaint as the “taste,” and sell the $199 DIY + $999 attorney options right after this form.
+    </p>
   </div>
 
   <div class="card note">
@@ -210,74 +234,81 @@
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
 <script>
-/* ===== MODE ===== */
-const FREE_MODE = true; // <<<< All downloads unlocked; PayPal bypassed for testing
+/* MODE: all free while testing */
+const FREE_MODE = true;
 
-/* ===== BACKEND (already your credentials) ===== */
+/* Your backend settings (already set) */
 const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYcXRcA2G5QmacxUA1AsihyNxB386ZLIQlL7xC8BIN0728hNQ1WRtB3ihFhqwIWJSA/exec";
 const DRIVE_FOLDER_ID = "109VOF-SMMZuKTNkzfFoLVG-KUo6vgu3m";
 const NOTIFY_EMAIL = "ettrickc@gmail.com";
 
-/* ===== Embedded base64 templates =====
-   For PRODUCTION, paste base64 strings for each key below.
-   For TESTING, you can use the Dev Helper uploader to set them temporarily.
-*/
+/* Template storage — initially empty. You load them via the Developer Setup box. */
 const TEMPLATES = {
-  COMPLAINT: "__B64_COMPLAINT__",  // paste base64 of COMPLAINT.docx here for one-click test
-  AFF_P:     "__B64_AFFIRMATION_P__",
-  AFF_D:     "__B64_AFFIRMATION_D__",
-  REG:       "__B64_REGULARITY__",
-  FIND:      "__B64_FINDINGS__",
-  JUDG:      "__B64_JUDGMENT__",
-  NOI:       "__B64_NOTE_OF_ISSUE__",
-  CERT:      "__B64_CERTIFICATION__",
-  INSTR:     "__B64_INSTRUCTIONS__",
-  RJI:       "__B64_RJI_PDF__",
-  CERTDISS:  "__B64_CERT_OF_DISS_PDF__"
+  COMPLAINT: "",   // will be filled when you upload COMPLAINT.docx
+  AFF_P: "",
+  AFF_D: "",
+  REG: "",
+  FIND: "",
+  JUDG: "",
+  NOI: "",
+  CERT: "",
+  INSTR: "",
+  RJI: "",
+  CERTDISS: ""
 };
 
-/* ===== counties (boroughs first) ===== */
+/* NY counties: boroughs first */
 const BOROUGH_FIRST = ["Bronx","Kings","New York","Queens","Richmond"];
 const OTHER_COUNTIES = ["Albany","Allegany","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Rensselaer","Rockland","St. Lawrence","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"];
 const NY_COUNTIES = [...BOROUGH_FIRST, ...OTHER_COUNTIES];
 
-/* ===== helpers ===== */
-const $=s=>document.querySelector(s);
-function setChoices(el,arr){ el.innerHTML = '<option value="">Select…</option>' + arr.map(x=>`<option>${x}</option>`).join(''); }
-function fmtLong(d){ if(!d) return ""; const [y,m,da]=d.split("-").map(n=>parseInt(n,10)); const dt=new Date(y,m-1,da); return dt.toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric'}); }
-function b64ToBlob(b64, mime){ const bytes = atob(b64); const arr = new Uint8Array(bytes.length); for(let i=0;i<bytes.length;i++)arr[i]=bytes.charCodeAt(i); return new Blob([arr],{type:mime}); }
+const $ = s => document.querySelector(s);
+
+function setChoices(el, arr){
+  el.innerHTML = '<option value="">Select…</option>' + arr.map(x=>`<option>${x}</option>`).join('');
+}
+
+function fmtLong(d){
+  if(!d) return "";
+  const [y,m,da] = d.split("-").map(n=>parseInt(n,10));
+  const dt = new Date(y,m-1,da);
+  return dt.toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric'});
+}
+
+function b64ToBlob(b64, mime){
+  const bytes = atob(b64);
+  const arr = new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
 
 async function applyToDocxBase(base64, map){
+  if (!window.JSZip) throw new Error("JSZip library not loaded");
   const zip = await JSZip.loadAsync(base64, {base64:true});
   const parts = ['word/document.xml','word/header1.xml','word/footer1.xml'];
   for(const p of parts){
-    const f=zip.file(p); if(!f) continue;
-    let xml=await f.async('string');
+    const f = zip.file(p); if(!f) continue;
+    let xml = await f.async('string');
     map.forEach((v,k)=>{ xml = xml.replace(k, v); });
     zip.file(p, xml);
   }
-  const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-  return new Blob([blob],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  const blob = await zip.generateAsync({
+    type:'blob',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+  return new Blob([blob],{
+    type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
 }
 
-/* ===== mapping logic to your DOCX placeholders =====
-   Your template uses tokens like:
-   [KINGS], [JANE DOE], [JOHN DOE], CADDRESS, LADDRESS, [PHONE], VENUED, GMARRIAGEDATE,
-   HTOWNCITY, ISTATECOUNTRY, DBIRTH, KBIRTH,
-   [1 MAIN STREET, BROOKLYN, NEW YORK 11208], [2 CENTRAL AVENUE, QUEENS, NEW YORK 11422],
-   PLAINTIFFMAIDEN, DEFENDANTMAIDEN.
-*/
+/* Replace your template tokens */
 function buildMap(a){
-  const county=a.county||"", phone=a.phone||"";
+  const county = a.county || "";
+  const phone = a.phone || "";
   const venued = a.venue_reason==="PLAINTIFF_LIVES" ? "Plaintiff's" : "Defendant’s";
   const gm = fmtLong(a.m_date);
-
-  // Produce Plaintiff/Defendant names (first + last)
   const pl_name = (a.pl_first + " " + a.pl_last).trim();
   const def_name = (a.def_first + " " + a.def_last).trim();
-
-  // Decide which tag gets the wife's maiden name
-  // If Plaintiff is Wife => PLAINTIFFMAIDEN = wife's maiden; else DEFENDANTMAIDEN = wife's maiden
   const maiden = (a.wife_maiden || "").toUpperCase();
   const setPlaintiffMaiden = a.role === "WIFE";
 
@@ -285,27 +316,21 @@ function buildMap(a){
   map.set(/\[KINGS\]/g, county);
   map.set(/\[JANE\s+DOE\]/g, pl_name);
   map.set(/\[JOHN\s+DOE\]/g, def_name);
-
   map.set(/CADDRESS/g, a.pl_addr||"");
   map.set(/LADDRESS/g, a.def_addr||"");
   map.set(/\[PHONE\]/g, phone);
   map.set(/VENUED/g, venued);
   map.set(/GMARRIAGEDATE/g, gm||"");
 
-  // Marriage place (USA vs INTL)
   const town = a.m_city || "";
   const stateOrCountry = a.m_state_or_country || "";
   map.set(/HTOWNCITY/g, town.toUpperCase());
   map.set(/ISTATECOUNTRY/g, stateOrCountry.toUpperCase());
-
   map.set(/DBIRTH/g, fmtLong(a.pl_dob)||"");
   map.set(/KBIRTH/g, fmtLong(a.def_dob)||"");
-
-  // Known literal examples (safe to overwrite)
   map.set(/\[1 MAIN STREET, BROOKLYN, NEW YORK 11208\]/g, a.pl_addr||"");
   map.set(/\[2 CENTRAL AVENUE, QUEENS, NEW YORK 11422\]/g, a.def_addr||"");
 
-  // Maiden tags
   if (setPlaintiffMaiden) {
     map.set(/PLAINTIFFMAIDEN/g, maiden);
     map.set(/DEFENDANTMAIDEN/g, "");
@@ -313,7 +338,6 @@ function buildMap(a){
     map.set(/DEFENDANTMAIDEN/g, maiden);
     map.set(/PLAINTIFFMAIDEN/g, "");
   }
-
   return map;
 }
 
@@ -354,17 +378,18 @@ async function sendToAppsScript(payload){
         payload
       })
     });
-  }catch(e){ console.warn("Apps Script error (non-blocking):", e); }
+  }catch(e){
+    console.warn("Apps Script error (non-blocking):", e);
+  }
 }
 
-/* ===== page init ===== */
 let lastComplaintBlob = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Counties: boroughs first
+  /* 1. Populate counties */
   setChoices($('#county'), NY_COUNTIES);
 
-  // Marriage labels based on country
+  /* 2. Switch labels based on USA vs INTL */
   function updateMarriageLabels() {
     const isUSA = $('#m_country_sel').value === 'USA';
     $('#m_city_label').textContent = isUSA ? 'Marriage City *' : 'Marriage Town *';
@@ -374,60 +399,76 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#m_country_sel').addEventListener('change', updateMarriageLabels);
   updateMarriageLabels();
 
-  // Build free S&C
+  /* 3. Build free Summons & Complaint */
   $('#build').addEventListener('click', async (e)=>{
     e.preventDefault();
-    $('#status').textContent = "Building your Summons & Complaint…";
+    const statusEl = $('#status');
+    statusEl.classList.remove('error-text');
+    statusEl.textContent = "Building your Summons & Complaint…";
+
     try{
+      if(!(TEMPLATES.COMPLAINT||"").trim()){
+        statusEl.classList.add('error-text');
+        statusEl.textContent = "Setup step missing: scroll down to Developer Setup, choose key = COMPLAINT, upload COMPLAINT.docx, then try again.";
+        return;
+      }
       const data = collect();
-      if(!(TEMPLATES.COMPLAINT||"").trim()){ throw new Error("Complaint template not embedded yet. Use Dev Helper to upload a DOCX temporarily."); }
       const map = buildMap(data);
       lastComplaintBlob = await applyToDocxBase(TEMPLATES.COMPLAINT, map);
-      $('#status').textContent = "Ready!";
+
+      statusEl.textContent = "Ready! Scroll down to download.";
       $('#freeBlock').classList.remove('hidden');
       if (FREE_MODE) $('#fullPackage').classList.remove('hidden');
 
-      // Email + save to Drive via Apps Script (non-blocking)
       const reader = new FileReader();
       reader.onload = () => {
         const b64 = reader.result.split(",")[1];
-        sendToAppsScript({...data, complaint_b64: b64, paidTier: FREE_MODE ? "FREE_TEST" : "FREE"});
+        sendToAppsScript({...data, complaint_b64: b64, paidTier: "FREE_TEST"});
       };
       reader.readAsDataURL(lastComplaintBlob);
     }catch(err){
       console.error(err);
-      $('#status').textContent = "Error. Please try again.";
+      statusEl.classList.add('error-text');
+      statusEl.textContent = "There was a technical issue building the document. Check that JSZip loaded and a template is uploaded.";
     }
   });
 
-  // Download S&C
+  /* 4. Download S&C */
   $('#downloadSAndC').addEventListener('click', ()=>{
     if(!lastComplaintBlob) return;
     saveAs(lastComplaintBlob, "NY_Summons_and_Complaint.docx");
   });
 
-  // Full package (test mode: let user download if base64 present)
+  /* 5. Full package buttons (in FREE_MODE they just download if template is loaded) */
   document.querySelectorAll('#fullPackage [data-doc]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const key = btn.getAttribute('data-doc');
       const b64 = (TEMPLATES[key]||"").trim();
-      if(!b64){ alert("This template is not embedded yet. (OK in test mode)"); return; }
+      if(!b64){
+        alert("Template for " + key + " is not connected yet. Use the Developer Setup box to upload it.");
+        return;
+      }
       const isPdf = (key==="RJI" || key==="CERTDISS");
       const blob = b64ToBlob(b64, isPdf ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
       saveAs(blob, `NY_${key}.${isPdf?'pdf':'docx'}`);
     });
   });
 
-  // Dev helper: drop a file to set a template immediately (for quick testing)
+  /* 6. Developer Setup: upload DOCX/PDF → in-memory base64 (no code editing) */
   $('#dev_file').addEventListener('change', ()=>{
     const file = $('#dev_file').files[0];
-    if(!file) return;
+    const devStatus = $('#dev_status');
+    devStatus.classList.remove('error-text');
+    if(!file){
+      devStatus.textContent = "";
+      return;
+    }
     const key = $('#dev_key').value;
     const reader = new FileReader();
     reader.onload = () => {
       const b64 = reader.result.split(",")[1];
       TEMPLATES[key] = b64;
-      alert(`Template "${key}" loaded for this session.`);
+      devStatus.textContent = "Loaded template for key “" + key + "” in this browser session.";
     };
     reader.readAsDataURL(file);
   });
@@ -435,3 +476,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
