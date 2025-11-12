@@ -20,13 +20,10 @@
   @media(min-width:760px){.row-2{grid-template-columns:1fr 1fr}}
   .btn{display:inline-flex;gap:.5rem;align-items:center;justify-content:center;padding:12px 18px;border-radius:10px;border:0;background:#0d6efd;color:#fff;font-weight:700;cursor:pointer}
   .btn.alt{background:#16a34a}
-  .btn.small{font-size:.9rem;padding:8px 12px}
   .note{font-size:.95rem;color:#374151}
   .hidden{display:none}
   .ok{color:#16a34a;font-weight:700}
   .guarantee{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:8px}
-  .dev{background:#fff7ed;border:1px dashed #fdba74;border-radius:10px;padding:10px}
-  .dev h4{margin:0 0 4px}
   .error-text{color:#b91c1c;font-weight:600}
 </style>
 </head>
@@ -189,75 +186,18 @@
     </div>
   </div>
 
-  <!-- Developer setup box so you never see “Error. Please try again.” again -->
-  <div class="card dev">
-    <h4>Developer Setup (1-time per browser)</h4>
-    <p class="note">
-      Before testing, load your templates here. At minimum, pick <strong>COMPLAINT.docx</strong>.
-    </p>
-    <div class="row row-2">
-      <div>
-        <label>Choose Template Key</label>
-        <select id="dev_key">
-          <option value="COMPLAINT">COMPLAINT (Summons &amp; Complaint)</option>
-          <option value="AFF_P">AFF_P — Affirmation of Plaintiff</option>
-          <option value="AFF_D">AFF_D — Affirmation of Defendant</option>
-          <option value="REG">REG — Affirmation of Regularity</option>
-          <option value="FIND">FIND — Findings</option>
-          <option value="JUDG">JUDG — Judgment of Divorce</option>
-          <option value="NOI">NOI — Note of Issue</option>
-          <option value="CERT">CERT — Certification</option>
-          <option value="INSTR">INSTR — Instructions</option>
-          <option value="RJI">RJI — RJI (PDF)</option>
-          <option value="CERTDISS">CERTDISS — Certificate of Dissolution (PDF)</option>
-        </select>
-      </div>
-      <div>
-        <label>Upload DOCX/PDF for Selected Key</label>
-        <input id="dev_file" type="file" accept=".docx,.pdf"/>
-      </div>
-    </div>
-    <p id="dev_status" class="note"></p>
-    <p class="note">
-      <strong>Tip for max conversions:</strong> Once you confirm everything works, we’ll turn PayPal back on, keep 
-      the free Summons &amp; Complaint as the “taste,” and sell the $199 DIY + $999 attorney options right after this form.
-    </p>
-  </div>
-
   <div class="card note">
     Disclaimer: We prepare documents from your answers; you are responsible for signing and filing unless you choose the attorney-handled option.
   </div>
 </div>
 
-<!-- libs -->
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-
 <script>
-/* MODE: all free while testing */
-const FREE_MODE = true;
+/* === CONFIG === */
+const FREE_MODE = true; // all docs unlocked (no PayPal while testing)
 
-/* Your backend settings (already set) */
+// Your already-deployed Apps Script Web App URL:
 const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYcXRcA2G5QmacxUA1AsihyNxB386ZLIQlL7xC8BIN0728hNQ1WRtB3ihFhqwIWJSA/exec";
-const DRIVE_FOLDER_ID = "109VOF-SMMZuKTNkzfFoLVG-KUo6vgu3m";
-const NOTIFY_EMAIL = "ettrickc@gmail.com";
 
-/* Template storage — initially empty. You load them via the Developer Setup box. */
-const TEMPLATES = {
-  COMPLAINT: "",   // will be filled when you upload COMPLAINT.docx
-  AFF_P: "",
-  AFF_D: "",
-  REG: "",
-  FIND: "",
-  JUDG: "",
-  NOI: "",
-  CERT: "",
-  INSTR: "",
-  RJI: "",
-  CERTDISS: ""
-};
-
-/* NY counties: boroughs first */
 const BOROUGH_FIRST = ["Bronx","Kings","New York","Queens","Richmond"];
 const OTHER_COUNTIES = ["Albany","Allegany","Broome","Cattaraugus","Cayuga","Chautauqua","Chemung","Chenango","Clinton","Columbia","Cortland","Delaware","Dutchess","Erie","Essex","Franklin","Fulton","Genesee","Greene","Hamilton","Herkimer","Jefferson","Lewis","Livingston","Madison","Monroe","Montgomery","Nassau","Niagara","Oneida","Onondaga","Ontario","Orange","Orleans","Oswego","Otsego","Putnam","Rensselaer","Rockland","St. Lawrence","Saratoga","Schenectady","Schoharie","Schuyler","Seneca","Steuben","Suffolk","Sullivan","Tioga","Tompkins","Ulster","Warren","Washington","Wayne","Westchester","Wyoming","Yates"];
 const NY_COUNTIES = [...BOROUGH_FIRST, ...OTHER_COUNTIES];
@@ -268,80 +208,7 @@ function setChoices(el, arr){
   el.innerHTML = '<option value="">Select…</option>' + arr.map(x=>`<option>${x}</option>`).join('');
 }
 
-function fmtLong(d){
-  if(!d) return "";
-  const [y,m,da] = d.split("-").map(n=>parseInt(n,10));
-  const dt = new Date(y,m-1,da);
-  return dt.toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric'});
-}
-
-function b64ToBlob(b64, mime){
-  const bytes = atob(b64);
-  const arr = new Uint8Array(bytes.length);
-  for(let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
-  return new Blob([arr],{type:mime});
-}
-
-async function applyToDocxBase(base64, map){
-  if (!window.JSZip) throw new Error("JSZip library not loaded");
-  const zip = await JSZip.loadAsync(base64, {base64:true});
-  const parts = ['word/document.xml','word/header1.xml','word/footer1.xml'];
-  for(const p of parts){
-    const f = zip.file(p); if(!f) continue;
-    let xml = await f.async('string');
-    map.forEach((v,k)=>{ xml = xml.replace(k, v); });
-    zip.file(p, xml);
-  }
-  const blob = await zip.generateAsync({
-    type:'blob',
-    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  });
-  return new Blob([blob],{
-    type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  });
-}
-
-/* Replace your template tokens */
-function buildMap(a){
-  const county = a.county || "";
-  const phone = a.phone || "";
-  const venued = a.venue_reason==="PLAINTIFF_LIVES" ? "Plaintiff's" : "Defendant’s";
-  const gm = fmtLong(a.m_date);
-  const pl_name = (a.pl_first + " " + a.pl_last).trim();
-  const def_name = (a.def_first + " " + a.def_last).trim();
-  const maiden = (a.wife_maiden || "").toUpperCase();
-  const setPlaintiffMaiden = a.role === "WIFE";
-
-  const map = new Map();
-  map.set(/\[KINGS\]/g, county);
-  map.set(/\[JANE\s+DOE\]/g, pl_name);
-  map.set(/\[JOHN\s+DOE\]/g, def_name);
-  map.set(/CADDRESS/g, a.pl_addr||"");
-  map.set(/LADDRESS/g, a.def_addr||"");
-  map.set(/\[PHONE\]/g, phone);
-  map.set(/VENUED/g, venued);
-  map.set(/GMARRIAGEDATE/g, gm||"");
-
-  const town = a.m_city || "";
-  const stateOrCountry = a.m_state_or_country || "";
-  map.set(/HTOWNCITY/g, town.toUpperCase());
-  map.set(/ISTATECOUNTRY/g, stateOrCountry.toUpperCase());
-  map.set(/DBIRTH/g, fmtLong(a.pl_dob)||"");
-  map.set(/KBIRTH/g, fmtLong(a.def_dob)||"");
-  map.set(/\[1 MAIN STREET, BROOKLYN, NEW YORK 11208\]/g, a.pl_addr||"");
-  map.set(/\[2 CENTRAL AVENUE, QUEENS, NEW YORK 11422\]/g, a.def_addr||"");
-
-  if (setPlaintiffMaiden) {
-    map.set(/PLAINTIFFMAIDEN/g, maiden);
-    map.set(/DEFENDANTMAIDEN/g, "");
-  } else {
-    map.set(/DEFENDANTMAIDEN/g, maiden);
-    map.set(/PLAINTIFFMAIDEN/g, "");
-  }
-  return map;
-}
-
-function collect(){
+function collectPayload(){
   const isUSA = $('#m_country_sel').value === 'USA';
   return {
     role: $('#you_are').value,
@@ -366,31 +233,49 @@ function collect(){
   };
 }
 
-async function sendToAppsScript(payload){
-  try{
-    await fetch(APPS_SCRIPT_WEBAPP_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        type:"divorce-intake",
-        notifyEmail: NOTIFY_EMAIL,
-        driveFolderId: DRIVE_FOLDER_ID,
-        payload
-      })
-    });
-  }catch(e){
-    console.warn("Apps Script error (non-blocking):", e);
+/* Convert base64 string to downloadable file */
+function downloadBase64File(b64, fileName, mime){
+  const byteChars = atob(b64);
+  const byteNumbers = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i);
   }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-let lastComplaintBlob = null;
+/* Call Apps Script to build a DOCX from a Drive template */
+async function buildDocFromServer(docKey, payload, paidTier){
+  const res = await fetch(APPS_SCRIPT_WEBAPP_URL, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({
+      action: "buildDoc",
+      docKey,
+      payload,
+      paidTier: paidTier || "FREE_TEST"
+    })
+  });
+  if (!res.ok) throw new Error("Network error");
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || "Server error");
+  return data; // { ok:true, docB64, fileName, mimeType }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-  /* 1. Populate counties */
+  // 1) Set counties
   setChoices($('#county'), NY_COUNTIES);
 
-  /* 2. Switch labels based on USA vs INTL */
-  function updateMarriageLabels() {
+  // 2) Dynamic marriage labels
+  function updateMarriageLabels(){
     const isUSA = $('#m_country_sel').value === 'USA';
     $('#m_city_label').textContent = isUSA ? 'Marriage City *' : 'Marriage Town *';
     $('#m_state_label').textContent = isUSA ? 'Marriage State *' : 'Marriage Country *';
@@ -399,7 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#m_country_sel').addEventListener('change', updateMarriageLabels);
   updateMarriageLabels();
 
-  /* 3. Build free Summons & Complaint */
+  let lastComplaintDoc = null; // {b64,fileName,mime}
+
+  // 3) Generate free S&C by asking Apps Script
   $('#build').addEventListener('click', async (e)=>{
     e.preventDefault();
     const statusEl = $('#status');
@@ -407,73 +294,37 @@ document.addEventListener('DOMContentLoaded', () => {
     statusEl.textContent = "Building your Summons & Complaint…";
 
     try{
-      if(!(TEMPLATES.COMPLAINT||"").trim()){
-        statusEl.classList.add('error-text');
-        statusEl.textContent = "Setup step missing: scroll down to Developer Setup, choose key = COMPLAINT, upload COMPLAINT.docx, then try again.";
-        return;
-      }
-      const data = collect();
-      const map = buildMap(data);
-      lastComplaintBlob = await applyToDocxBase(TEMPLATES.COMPLAINT, map);
+      const payload = collectPayload();
+      const result = await buildDocFromServer("COMPLAINT", payload, "FREE_TEST");
+      lastComplaintDoc = {
+        b64: result.docB64,
+        fileName: result.fileName || "NY_Summons_and_Complaint.docx",
+        mime: result.mimeType || "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      };
 
       statusEl.textContent = "Ready! Scroll down to download.";
       $('#freeBlock').classList.remove('hidden');
       if (FREE_MODE) $('#fullPackage').classList.remove('hidden');
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const b64 = reader.result.split(",")[1];
-        sendToAppsScript({...data, complaint_b64: b64, paidTier: "FREE_TEST"});
-      };
-      reader.readAsDataURL(lastComplaintBlob);
     }catch(err){
       console.error(err);
       statusEl.classList.add('error-text');
-      statusEl.textContent = "There was a technical issue building the document. Check that JSZip loaded and a template is uploaded.";
+      statusEl.textContent = "There was a technical issue building the document. Please try again.";
     }
   });
 
-  /* 4. Download S&C */
+  // 4) Download S&C
   $('#downloadSAndC').addEventListener('click', ()=>{
-    if(!lastComplaintBlob) return;
-    saveAs(lastComplaintBlob, "NY_Summons_and_Complaint.docx");
+    if (!lastComplaintDoc) return;
+    downloadBase64File(lastComplaintDoc.b64, lastComplaintDoc.fileName, lastComplaintDoc.mime);
   });
 
-  /* 5. Full package buttons (in FREE_MODE they just download if template is loaded) */
+  // 5) Full package buttons → ask Apps Script for the corresponding template
   document.querySelectorAll('#fullPackage [data-doc]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const key = btn.getAttribute('data-doc');
-      const b64 = (TEMPLATES[key]||"").trim();
-      if(!b64){
-        alert("Template for " + key + " is not connected yet. Use the Developer Setup box to upload it.");
-        return;
-      }
-      const isPdf = (key==="RJI" || key==="CERTDISS");
-      const blob = b64ToBlob(b64, isPdf ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-      saveAs(blob, `NY_${key}.${isPdf?'pdf':'docx'}`);
-    });
-  });
+      const statusEl = $('#status');
+      statusEl.classList.remove('error-text');
+      statusEl.textContent = "Preparing " + key + "…";
 
-  /* 6. Developer Setup: upload DOCX/PDF → in-memory base64 (no code editing) */
-  $('#dev_file').addEventListener('change', ()=>{
-    const file = $('#dev_file').files[0];
-    const devStatus = $('#dev_status');
-    devStatus.classList.remove('error-text');
-    if(!file){
-      devStatus.textContent = "";
-      return;
-    }
-    const key = $('#dev_key').value;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const b64 = reader.result.split(",")[1];
-      TEMPLATES[key] = b64;
-      devStatus.textContent = "Loaded template for key “" + key + "” in this browser session.";
-    };
-    reader.readAsDataURL(file);
-  });
-});
-</script>
-</body>
-</html>
-
+      try{
+        const payload = collectPayload(); // sa
