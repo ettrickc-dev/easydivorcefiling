@@ -162,7 +162,7 @@ textarea{min-height:90px;resize:vertical;}
             <div id="intl_pair" class="hide">
               <div class="grid cols-2">
                 <div><label>Marriage Town *</label><input id="m_town"></div>
-                <div><label>Marriage Country *</label><input id="m_country"></input></div>
+                <div><label>Marriage Country *</label><input id="m_country"></div>
               </div>
             </div>
           </div>
@@ -299,8 +299,7 @@ textarea{min-height:90px;resize:vertical;}
 
 <script>
 /* ===================== EMAIL CONFIG (YOU EDIT THIS URL) ===================== */
-const EMAIL_WEBHOOK_URL = "
-https://script.google.com/macros/s/AKfycbwm_xQsgkc5NfwbTvOqTI3AcQu9o_d015YFEoiOvt_esUooqPbQ2VtWQHo5ODbfxV8E/exec"; // <-- REPLACE with your Apps Script /exec URL
+const EMAIL_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwm_xQsgkc5NfwbTvOqTI3AcQu9o_d015YFEoiOvt_esUooqPbQ2VtWQHo5ODbfxV8E/exec"; // <-- REPLACE with your Apps Script /exec URL
 const OWNER_EMAIL       = "ettrickc@gmail.com";
 /* ============================================================================ */
 
@@ -492,8 +491,11 @@ function onRoleChange(){
 }
 
 function onCountyChange(){
-  const sel=$('county');
-  const txt=sel.options[sel.selectedIndex]?.text||'';
+  const sel = $('county');
+  let txt = '';
+  if (sel && sel.options && sel.options.length && sel.selectedIndex >= 0) {
+    txt = sel.options[sel.selectedIndex].text || '';
+  }
   $('venue_label').textContent = txt
     ? `Filing Residency Reason in ${txt} *`
     : 'Filing Residency Reason in Select… *';
@@ -758,6 +760,4 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 </body>
 </html>
-
-
 
